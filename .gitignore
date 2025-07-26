@@ -1,0 +1,87 @@
+# ---- Rust ----
+/target/
+/Cargo.lock
+**/*.rs.bk
+
+# ---- C/C++ ----
+*.o
+*.obj
+*.so
+*.a
+*.out
+*.lo
+*.la
+*.d
+*.exe
+*.dll
+*.dSYM/
+*.stackdump
+
+# ---- Kernel Module/Driver ----
+*.ko
+*.mod.c
+*.mod.o
+*.mod
+*.order
+*.symvers
+*.tmp_versions/
+Module.symvers
+modules.order
+
+# ---- Build/Temp ----
+*.log
+*.tmp
+*.swp
+*~
+*.bak
+
+# ---- asm/汇编 ----
+*.lst
+*.map
+*.bin
+*.elf
+*.img
+
+# ---- CLion/VSCode/IDE ----
+.idea/
+.vscode/
+*.code-workspace
+
+# ---- macOS/Linux杂项 ----
+.DS_Store
+*.swp
+*~
+
+# ---- Scripts/自动生成 ----
+/build/
+/dist/
+/*.tar.gz
+*.tar
+*.gz
+*.zip
+
+# ---- eBPF/bpf工具链临时 ----
+*.skel.h
+*.bpf.o
+
+# ---- Coverage/测试 ----
+/coverage/
+*.gcda
+*.gcno
+*.gcov
+
+# ---- Docs ----
+/docs/_build/
+/docs/html/
+/docs/.doctrees
+
+# ---- Node/JS工程(如果有) ----
+node_modules/
+npm-debug.log
+
+# ---- Python/脚本工程(如果有) ----
+__pycache__/
+*.pyc
+
+# ---- Git ----
+.git/
