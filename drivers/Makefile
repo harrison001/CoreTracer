@@ -6,13 +6,21 @@ KDIR ?= /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 
 # Module names
-MODULES = affinity_numa_demo lockfree_ring_demo cacheline_false_demo bank_conflict_demo
+MODULES = affinity_numa_demo lockfree_ring_demo cacheline_false_demo bank_conflict_demo \
+          deadlock_demo hugepage_numa_demo memory_barrier_demo percpu_demo \
+          preemption_demo tlb_demo
 
 # Module objects
 obj-m += affinity_numa_demo.o
 obj-m += lockfree_ring_demo.o
 obj-m += cacheline_false_demo.o
 obj-m += bank_conflict_demo.o
+# obj-m += deadlock_demo.o  # Temporarily disabled due to compilation issues
+obj-m += hugepage_numa_demo.o
+obj-m += memory_barrier_demo.o
+obj-m += percpu_demo.o
+obj-m += preemption_demo.o
+obj-m += tlb_demo.o
 
 # Compiler flags for debugging and optimization
 ccflags-y += -DDEBUG
@@ -134,6 +142,12 @@ help:
 	@echo "  cat /proc/lockfree_ring     # Lock-free ring buffer demo"  
 	@echo "  cat /proc/cacheline_false   # Cache line false sharing demo"
 	@echo "  cat /proc/bank_conflict     # Memory bank conflict demo"
+	@echo "  cat /proc/deadlock_demo     # Deadlock detection demo"
+	@echo "  cat /proc/hugepage_numa     # Hugepage NUMA demo"
+	@echo "  cat /proc/memory_barrier    # Memory barrier demo"
+	@echo "  cat /proc/percpu_demo       # Per-CPU data demo"
+	@echo "  cat /proc/preemption_demo   # Preemption demo"
+	@echo "  cat /proc/tlb_demo          # TLB demo"
 	@echo ""
 	@echo "Example workflow:"
 	@echo "  make               # Build modules"

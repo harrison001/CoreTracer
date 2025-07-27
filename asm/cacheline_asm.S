@@ -53,7 +53,8 @@ false_sharing_loop:
     
     # Modify (simple increment with some computation)
     inc rax
-    xor rax, 0x5555555555555555
+    mov rdx, 0x5555555555555555
+    xor rax, rdx
     
     # Store back (this will invalidate cache lines on other cores)
     mov QWORD PTR [r12], rax

@@ -2,8 +2,8 @@
 # Main project Makefile for building and managing all components
 
 .PHONY: all clean build test install uninstall help
-.PHONY: drivers rust asm scripts docs
-.PHONY: load-drivers unload-drivers test-drivers
+.PHONY: drivers rust asm asm-info scripts docs
+.PHONY: load-drivers unload-drivers test-drivers test-asm
 .PHONY: benchmark profile debug
 
 # Project configuration
@@ -32,11 +32,13 @@ help:
 	@echo "    drivers      - Build kernel driver modules"
 	@echo "    rust         - Build Rust demos and benchmarks"
 	@echo "    asm          - Assemble assembly demos"
+	@echo "    asm-info     - Show assembly build information"
 	@echo "    clean        - Clean all build artifacts"
 	@echo ""
 	@echo "  Testing targets:"
 	@echo "    test         - Run all tests and basic functionality checks"
 	@echo "    test-drivers - Test kernel drivers"
+	@echo "    test-asm     - Test assembly components"
 	@echo "    benchmark    - Run performance benchmarks"
 	@echo ""
 	@echo "  Driver management:"
@@ -50,6 +52,7 @@ help:
 	@echo "  Analysis:"
 	@echo "    profile      - Run profiling scripts"
 	@echo "    debug        - Set up debugging environment"
+	@echo ""
 	@echo ""
 	@echo "  Utilities:"
 	@echo "    docs         - Generate documentation"
@@ -77,18 +80,35 @@ rust:
 asm:
 	@echo "Assembling demo files..."
 	@mkdir -p $(BUILD_DIR)/asm
+	$(eval ARCH := $(shell uname -m))
+	@echo "Building for architecture: $(ARCH)"
 	# x86-64 Intel syntax assembly
-	gcc -c $(ASM_DIR)/lockfree_asm.S -o $(BUILD_DIR)/asm/lockfree_asm.o
-	gcc -c $(ASM_DIR)/cacheline_asm.S -o $(BUILD_DIR)/asm/cacheline_asm.o
-	# ARM64 assembly (conditional compilation based on architecture)
-	@if [ "$(shell uname -m)" = "aarch64" ]; then \
+	@if [ "$(ARCH)" = "x86_64" ]; then \
+		echo "Compiling x86-64 assembly files..."; \
+		gcc -c $(ASM_DIR)/lockfree_asm.S -o $(BUILD_DIR)/asm/lockfree_asm.o; \
+		gcc -c $(ASM_DIR)/cacheline_asm.S -o $(BUILD_DIR)/asm/cacheline_asm.o; \
+		gcc -c $(ASM_DIR)/ooo_execution.S -o $(BUILD_DIR)/asm/ooo_execution.o; \
+		gcc -c $(ASM_DIR)/prefetch_pollution.S -o $(BUILD_DIR)/asm/prefetch_pollution.o; \
+		gcc -c $(ASM_DIR)/speculative_demo.S -o $(BUILD_DIR)/asm/speculative_demo.o; \
+		gcc -c $(ASM_DIR)/tlb_shootdown.S -o $(BUILD_DIR)/asm/tlb_shootdown.o; \
+		echo "x86-64 assembly compiled successfully"; \
+	fi
+	# ARM64 AArch64 assembly
+	@if [ "$(ARCH)" = "aarch64" ]; then \
+		echo "Compiling ARM64 assembly files..."; \
 		gcc -c $(ASM_DIR)/lockfree_asm_arm.S -o $(BUILD_DIR)/asm/lockfree_asm_arm.o; \
 		gcc -c $(ASM_DIR)/cacheline_asm_arm.S -o $(BUILD_DIR)/asm/cacheline_asm_arm.o; \
-		echo "ARM64 assembly compiled"; \
-	else \
-		echo "Skipping ARM64 assembly (not on ARM64 platform)"; \
+		gcc -c $(ASM_DIR)/ooo_execution_arm.S -o $(BUILD_DIR)/asm/ooo_execution_arm.o; \
+		gcc -c $(ASM_DIR)/prefetch_pollution_arm.S -o $(BUILD_DIR)/asm/prefetch_pollution_arm.o; \
+		gcc -c $(ASM_DIR)/speculative_demo_arm.S -o $(BUILD_DIR)/asm/speculative_demo_arm.o; \
+		gcc -c $(ASM_DIR)/tlb_shootdown_arm.S -o $(BUILD_DIR)/asm/tlb_shootdown_arm.o; \
+		echo "ARM64 assembly compiled successfully"; \
+	fi
+	@if [ "$(ARCH)" != "x86_64" ] && [ "$(ARCH)" != "aarch64" ]; then \
+		echo "Warning: Unsupported architecture $(ARCH). Supported: x86_64, aarch64"; \
 	fi
 	@echo "Assembly demos assembled successfully!"
+
 
 # Clean all build artifacts
 clean:
@@ -115,7 +135,7 @@ status-drivers:
 	$(MAKE) -C $(DRIVERS_DIR) status
 
 # Test all components
-test: test-drivers test-rust
+test: test-drivers test-rust test-asm
 	@echo "Running comprehensive tests..."
 	@echo "All tests completed!"
 
@@ -130,6 +150,56 @@ test-rust: rust
 	@echo "Testing Rust components..."
 	cd $(RUST_DIR) && cargo test
 	@echo "Rust tests completed!"
+
+# Test assembly components
+test-asm: asm
+	@echo "Testing assembly components..."
+	$(eval ARCH := $(shell uname -m))
+	@echo "Verifying assembly files for architecture: $(ARCH)"
+	@if [ "$(ARCH)" = "x86_64" ]; then \
+		echo "Checking x86-64 assembly object files..."; \
+		file $(BUILD_DIR)/asm/lockfree_asm.o | grep -q "x86-64" && echo "✓ lockfree_asm.o: OK" || echo "✗ lockfree_asm.o: FAILED"; \
+		file $(BUILD_DIR)/asm/cacheline_asm.o | grep -q "x86-64" && echo "✓ cacheline_asm.o: OK" || echo "✗ cacheline_asm.o: FAILED"; \
+		file $(BUILD_DIR)/asm/ooo_execution.o | grep -q "x86-64" && echo "✓ ooo_execution.o: OK" || echo "✗ ooo_execution.o: FAILED"; \
+		file $(BUILD_DIR)/asm/prefetch_pollution.o | grep -q "x86-64" && echo "✓ prefetch_pollution.o: OK" || echo "✗ prefetch_pollution.o: FAILED"; \
+		file $(BUILD_DIR)/asm/speculative_demo.o | grep -q "x86-64" && echo "✓ speculative_demo.o: OK" || echo "✗ speculative_demo.o: FAILED"; \
+		file $(BUILD_DIR)/asm/tlb_shootdown.o | grep -q "x86-64" && echo "✓ tlb_shootdown.o: OK" || echo "✗ tlb_shootdown.o: FAILED"; \
+	elif [ "$(ARCH)" = "aarch64" ]; then \
+		echo "Checking ARM64 assembly object files..."; \
+		file $(BUILD_DIR)/asm/lockfree_asm_arm.o | grep -q "aarch64" && echo "✓ lockfree_asm_arm.o: OK" || echo "✗ lockfree_asm_arm.o: FAILED"; \
+		file $(BUILD_DIR)/asm/cacheline_asm_arm.o | grep -q "aarch64" && echo "✓ cacheline_asm_arm.o: OK" || echo "✗ cacheline_asm_arm.o: FAILED"; \
+		file $(BUILD_DIR)/asm/ooo_execution_arm.o | grep -q "aarch64" && echo "✓ ooo_execution_arm.o: OK" || echo "✗ ooo_execution_arm.o: FAILED"; \
+		file $(BUILD_DIR)/asm/prefetch_pollution_arm.o | grep -q "aarch64" && echo "✓ prefetch_pollution_arm.o: OK" || echo "✗ prefetch_pollution_arm.o: FAILED"; \
+		file $(BUILD_DIR)/asm/speculative_demo_arm.o | grep -q "aarch64" && echo "✓ speculative_demo_arm.o: OK" || echo "✗ speculative_demo_arm.o: FAILED"; \
+		file $(BUILD_DIR)/asm/tlb_shootdown_arm.o | grep -q "aarch64" && echo "✓ tlb_shootdown_arm.o: OK" || echo "✗ tlb_shootdown_arm.o: FAILED"; \
+	fi
+	@echo "Checking symbol tables..."
+	@for obj in $(BUILD_DIR)/asm/*.o; do \
+		echo "Symbols in $$obj:"; \
+		nm $$obj | grep -E "^[0-9a-f]+ [TRGWS]" | head -5 || echo "  No symbols found"; \
+	done
+	@echo "Assembly tests completed!"
+
+# Show assembly information and symbols
+asm-info: asm
+	@echo "=== Assembly Information ==="
+	$(eval ARCH := $(shell uname -m))
+	@echo "Target Architecture: $(ARCH)"
+	@echo ""
+	@echo "Built object files:"
+	@ls -la $(BUILD_DIR)/asm/*.o 2>/dev/null || echo "No object files found"
+	@echo ""
+	@echo "File types:"
+	@for obj in $(BUILD_DIR)/asm/*.o; do \
+		echo "$$obj: $$(file $$obj | cut -d: -f2)"; \
+	done
+	@echo ""
+	@echo "Exported symbols summary:"
+	@for obj in $(BUILD_DIR)/asm/*.o; do \
+		basename_obj=$$(basename $$obj); \
+		echo "$$basename_obj:"; \
+		nm $$obj | grep -E "^[0-9a-f]+ T" | wc -l | awk '{print "  Functions: " $$1}'; \
+	done
 
 # Run performance benchmarks
 benchmark: rust
@@ -268,8 +338,10 @@ status:
 	@echo "  Assembly: $$([ -d $(BUILD_DIR)/asm 2>/dev/null ] && echo 'Built' || echo 'Not built')"
 	@echo ""
 	@echo "Available assembly files:"
-	@echo "  x86-64 Intel syntax: lockfree_asm.S, cacheline_asm.S"
-	@echo "  ARM64 AArch64: lockfree_asm_arm.S, cacheline_asm_arm.S"
-	@echo "  Architecture: $(shell uname -m)"
+	@echo "  x86-64 Intel syntax: lockfree_asm.S, cacheline_asm.S, ooo_execution.S,"
+	@echo "                        prefetch_pollution.S, speculative_demo.S, tlb_shootdown.S"
+	@echo "  ARM64 AArch64: lockfree_asm_arm.S, cacheline_asm_arm.S, ooo_execution_arm.S,"
+	@echo "                 prefetch_pollution_arm.S, speculative_demo_arm.S, tlb_shootdown_arm.S"
+	@echo "  Current Architecture: $(shell uname -m)"
 	@echo ""
 	@$(MAKE) -C $(DRIVERS_DIR) status 2>/dev/null || echo "Driver status unavailable"
