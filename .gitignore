@@ -85,3 +85,5 @@ __pycache__/
 
 # ---- Git ----
 .git/
+c_demo/x86_vs_arm_memory_order/herdtools7/
+c_demo/x86_vs_arm_memory_order/paul_litmus/
