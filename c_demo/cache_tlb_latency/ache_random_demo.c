@@ -5,12 +5,12 @@
 #include <string.h>
 
 #define N (1024 * 1024 * 256)  // 256M elements (~1GB)
-#define REPEAT 1               // 可调，重复访问次数
+#define REPEAT 1               // Adjustable, repeat access count
 
-static int *arr;           // 大数组
-static size_t *index_seq;  // 访问顺序数组（顺序 or 随机）
+static int *arr;           // Large array
+static size_t *index_seq;  // Access sequence array (sequential or random)
 
-// 生成随机访问顺序
+// Generate random access sequence
 void shuffle(size_t *idx, size_t n) {
     for (size_t i = n - 1; i > 0; i--) {
         size_t j = rand() % (i + 1);
@@ -34,7 +34,7 @@ double timed_access(size_t *seq, size_t n) {
     clock_gettime(CLOCK_MONOTONIC, &end);
     double elapsed = (end.tv_sec - start.tv_sec) * 1e3 +
                      (end.tv_nsec - start.tv_nsec) / 1e6;
-    // 防止编译器优化掉访问
+    // Prevent compiler from optimizing away access
     if (sum == 42) printf("sum=%lld\n", sum);
     return elapsed;
 }
@@ -51,17 +51,17 @@ int main() {
     index_seq = malloc(elements * sizeof(size_t));
     if (!index_seq) { perror("malloc seq"); return 1; }
 
-    // 初始化数组
+    // Initialize array
     for (size_t i = 0; i < elements; i++) {
         arr[i] = (int)i;
         index_seq[i] = i;
     }
 
-    printf("\n=== 顺序访问 ===\n");
+    printf("\n=== Sequential Access ===\n");
     double t_seq = timed_access(index_seq, elements);
     printf("Time: %.2f ms\n", t_seq);
 
-    printf("\n=== 随机访问 ===\n");
+    printf("\n=== Random Access ===\n");
     shuffle(index_seq, elements);
     double t_rand = timed_access(index_seq, elements);
     printf("Time: %.2f ms\n", t_rand);
